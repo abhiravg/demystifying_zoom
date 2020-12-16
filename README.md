@@ -1,4 +1,4 @@
-# demystifying_zoom
+# Demystifying Zoom
 Fall 2020 UW Madison CS736 Project 3 scripts
 
 This is the code we wrote for our final project. Authors: Saurabh Kulkarni, Abhirav Gholba and Rami Dahman.
