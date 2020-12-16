@@ -1,7 +1,8 @@
 # demystifying_zoom
 Fall 2020 UW Madison CS736 Project 3 scripts
 
-This is the code we wrote for our final project.  
+This is the code we wrote for our final project. Authors: Saurabh Kulkarni, Abhirav Gholba and Rami Dahman.
+Contact me at skulkarni27@wisc.edu
 
 sock_traf.bt traces recv and send system calls.  
 thread_timing.bt traces a particular thread group's usage of popular system calls.  
