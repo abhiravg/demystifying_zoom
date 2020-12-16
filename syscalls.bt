@@ -1,0 +1,60 @@
+#!/usr/bin/env bpftrace
+
+#include <linux/time.h>
+#include <linux/sched.h>
+
+BEGIN
+{
+	printf("Tracing syscalls. Hit Ctrl-C to end.\n");
+}
+
+// on syscall enter,
+// trace all syscall counts
+// trace all syscall start times
+tracepoint:raw_syscalls:sys_enter
+/pid == (uint64)$1 || pid == (uint64)$2/
+{
+	
+	// syscall counts
+	@syscall[args->id] = count();
+	@process[comm] = count();
+	
+	// syscall start times
+	@start[args->id, tid] = nsecs;
+}
+
+// on syscall exit,
+// store syscall latency
+// add latency to total
+tracepoint:raw_syscalls:sys_exit
+/pid == (uint64)$1 || pid == (uint64)$2 && @start[args->id, tid]/
+{
+	$task = (struct task_struct *)curtask;
+
+	// add latency to total
+	@total[args->id] = @total[args->id] + (nsecs - @start[args->id, tid]);
+
+	// store syscall latency
+	@ns = hist(nsecs - @start[args->id, tid]);
+	delete(@start[args->id, tid]);
+}
+
+interval:s:60 {
+    exit();
+}
+
+END
+{
+	printf("\nTotal syscalls per PID:\n");
+	print(@syscall, 30);
+	clear(@syscall);
+
+	printf("\nTotal syscalls per process:\n");
+	print(@process, 30);
+	clear(@process);
+	
+	printf("Total time spent in each syscall:\n");
+	print(@total);
+	clear(@total);
+    clear(@start);
+}

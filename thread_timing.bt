@@ -1,0 +1,319 @@
+#!/usr/bin/env bpftrace
+
+#include <linux/time.h>
+#include <linux/sched.h>
+
+/*
+ * Usage: sudo bpftrace thread_behavior.bt <zoompid1> <zoompid2> <threadcomm>
+ */
+
+BEGIN
+{
+	printf("Tracing syscalls for %s, pids %d, %d. Hit Ctrl-C to end.\n", str($3), $1, $2);
+}
+
+
+//trace futex, id 202
+tracepoint:syscalls:sys_enter_futex
+/((pid == (uint64)$1 || pid == (uint64)$2) && (strncmp(comm, str($3), 50) == 0))/
+{
+    	
+    @syscall[comm, "futex", tid] = count();
+
+	// syscall start times
+	@start[tid, "futex"] = nsecs;
+}
+
+// on futex exit,
+// store futex latency
+// add latency to total
+tracepoint:syscalls:sys_exit_futex
+/(pid == (uint64)$1 || pid == (uint64)$2) && (strncmp(comm, str($3), 50) == 0) && @start[tid, "futex"]/
+{
+    
+    $latency = nsecs - @start[tid, "futex"];
+    //clear this for the next call
+	delete(@start[tid, "futex"]);
+
+	// add latency to total
+	@total[comm, "futex", tid] = @total[comm, "futex", tid] + $latency;
+
+	// store syscall latency
+	@ns[comm, "futex", tid] = hist($latency);
+}
+
+
+//trace getpid, id 39
+tracepoint:syscalls:sys_enter_getpid
+/((pid == (uint64)$1 || pid == (uint64)$2) && (strncmp(comm, str($3), 50) == 0))/
+{
+	@syscall[comm, "getpid", tid] = count();
+
+	// syscall start times
+	@start[tid, "getpid"] = nsecs;
+}
+
+// on getpid exit,
+// store getpid latency
+// add latency to total
+tracepoint:syscalls:sys_exit_getpid
+/(pid == (uint64)$1 || pid == (uint64)$2) && (strncmp(comm, str($3), 50) == 0) && @start[tid, "getpid"]/
+{
+    
+    $latency = nsecs - @start[tid, "getpid"];
+    //clear this for the next call
+	delete(@start[tid, "getpid"]);
+
+	// add latency to total
+	@total[comm, "getpid", tid] = @total[comm, "getpid", tid] + $latency;
+
+	// store syscall latency
+	@ns[comm, "getpid", tid] = hist($latency);
+}
+
+
+//trace poll, id 7
+tracepoint:syscalls:sys_enter_poll
+/((pid == (uint64)$1 || pid == (uint64)$2) && (strncmp(comm, str($3), 50) == 0))/
+{
+	@syscall[comm, "poll", tid] = count();
+	// syscall start times
+	@start[tid, "poll"] = nsecs;
+}
+
+// on poll exit,
+// store poll latency
+// add latency to total
+tracepoint:syscalls:sys_exit_poll
+/(pid == (uint64)$1 || pid == (uint64)$2) && (strncmp(comm, str($3), 50) == 0) && @start[tid, "poll"]/
+{
+    
+    $latency = nsecs - @start[tid, "poll"];
+    //clear this for the next call
+	delete(@start[tid, "poll"]);
+
+	// add latency to total
+	@total[comm, "poll", tid] = @total[comm, "poll", tid] + $latency;
+
+	// store syscall latency
+	@ns[comm, "poll", tid] = hist($latency);
+}
+
+//trace read, id 0
+tracepoint:syscalls:sys_enter_read
+/((pid == (uint64)$1 || pid == (uint64)$2) && (strncmp(comm, str($3), 50) == 0))/
+{
+	@syscall[comm, "read", tid] = count();
+	// syscall start times
+	@start[tid, "read"] = nsecs;
+}
+
+// on read exit,
+// store read latency
+// add latency to total
+tracepoint:syscalls:sys_exit_read
+/(pid == (uint64)$1 || pid == (uint64)$2) && (strncmp(comm, str($3), 50) == 0) && @start[tid, "read"]/
+{
+    
+    $latency = nsecs - @start[tid, "read"];
+    //clear this for the next call
+	delete(@start[tid, "read"]);
+
+	// add latency to total
+	@total[comm, "read", tid] = @total[comm, "read", tid] + $latency;
+
+	// store syscall latency
+	@ns[comm, "read", tid] = hist($latency);
+}
+
+
+//trace write, id 1
+tracepoint:syscalls:sys_enter_write
+/((pid == (uint64)$1 || pid == (uint64)$2) && (strncmp(comm, str($3), 50) == 0))/
+{
+	@syscall[comm, "write", tid] = count();
+	// syscall start times
+	@start[tid, "write"] = nsecs;
+}
+
+// on write exit,
+// store write latency
+// add latency to total
+tracepoint:syscalls:sys_exit_write
+/(pid == (uint64)$1 || pid == (uint64)$2) && (strncmp(comm, str($3), 50) == 0) && @start[tid, "write"]/
+{
+    
+    $latency = nsecs - @start[tid, "write"];
+    //clear this for the next call
+	delete(@start[tid, "write"]);
+
+	// add latency to total
+	@total[comm, "write", tid] = @total[comm, "write", tid] + $latency;
+
+	// store syscall latency
+	@ns[comm, "write", tid] = hist($latency);
+}
+
+//trace ioctl, id 16
+tracepoint:syscalls:sys_enter_ioctl
+/((pid == (uint64)$1 || pid == (uint64)$2) && (strncmp(comm, str($3), 50) == 0))/
+{
+	@syscall[comm, "ioctl", tid] = count();
+	// syscall start times
+	@start[tid, "ioctl"] = nsecs;
+}
+
+// on ioctl exit,
+// store ioctl latency
+// add latency to total
+tracepoint:syscalls:sys_exit_ioctl
+/(pid == (uint64)$1 || pid == (uint64)$2) && (strncmp(comm, str($3), 50) == 0) && @start[tid, "ioctl"]/
+{
+    
+    $latency = nsecs - @start[tid, "ioctl"];
+    //clear this for the next call
+	delete(@start[tid, "ioctl"]);
+
+	// add latency to total
+	@total[comm, "ioctl", tid] = @total[comm, "ioctl", tid] + $latency;
+
+	// store syscall latency
+	@ns[comm, "ioctl", tid] = hist($latency);
+}
+
+
+//trace recvfrom, id 45
+tracepoint:syscalls:sys_enter_recvfrom
+/((pid == (uint64)$1 || pid == (uint64)$2) && (strncmp(comm, str($3), 50) == 0))/
+{
+	@syscall[comm, "recvfrom", tid] = count();
+	// syscall start times
+	@start[tid, "recvfrom"] = nsecs;
+}
+
+// on recvfrom exit,
+// store recvfrom latency
+// add latency to total
+tracepoint:syscalls:sys_exit_recvfrom
+/(pid == (uint64)$1 || pid == (uint64)$2) && (strncmp(comm, str($3), 50) == 0) && @start[tid, "recvfrom"]/
+{
+    
+    $latency = nsecs - @start[tid, "recvfrom"];
+    //clear this for the next call
+	delete(@start[tid, "recvfrom"]);
+
+	// add latency to total
+	@total[comm, "recvfrom", tid] = @total[comm, "recvfrom", tid] + $latency;
+
+	// store syscall latency
+	@ns[comm, "recvfrom", tid] = hist($latency);
+}
+
+
+//trace sendmsg, id 46
+tracepoint:syscalls:sys_enter_sendmsg
+/((pid == (uint64)$1 || pid == (uint64)$2) && (strncmp(comm, str($3), 50) == 0))/
+{
+	@syscall[comm, "sendmsg", tid] = count();
+	// syscall start times
+	@start[tid, "sendmsg"] = nsecs;
+}
+
+// on sendmsg exit,
+// store sendmsg latency
+// add latency to total
+tracepoint:syscalls:sys_exit_sendmsg
+/(pid == (uint64)$1 || pid == (uint64)$2) && (strncmp(comm, str($3), 50) == 0) && @start[tid, "sendmsg"]/
+{
+    
+    $latency = nsecs - @start[tid, "sendmsg"];
+    //clear this for the next call
+	delete(@start[tid, "sendmsg"]);
+
+	// add latency to total
+	@total[comm, "sendmsg", tid] = @total[comm, "sendmsg", tid] + $latency;
+
+	// store syscall latency
+	@ns[comm, "sendmsg", tid] = hist($latency);
+}
+
+
+//trace times, id 100
+tracepoint:syscalls:sys_enter_times
+/((pid == (uint64)$1 || pid == (uint64)$2) && (strncmp(comm, str($3), 50) == 0))/
+{
+	@syscall[comm, "times", tid] = count();
+	// syscall start times
+	@start[tid, "times"] = nsecs;
+}
+
+// on times exit,
+// store times latency
+// add latency to total
+tracepoint:syscalls:sys_exit_times
+/(pid == (uint64)$1 || pid == (uint64)$2) && (strncmp(comm, str($3), 50) == 0) && @start[tid, "times"]/
+{
+    
+    $latency = nsecs - @start[tid, "times"];
+    //clear this for the next call
+	delete(@start[tid, "times"]);
+
+	// add latency to total
+	@total[comm, "times", tid] = @total[comm, "times", tid] + $latency;
+
+	// store syscall latency
+	@ns[comm, "times", tid] = hist($latency);
+}
+
+
+//trace clock_nanosleep, id 230
+tracepoint:syscalls:sys_enter_clock_nanosleep
+/((pid == (uint64)$1 || pid == (uint64)$2) && (strncmp(comm, str($3), 50) == 0))/
+{
+	@syscall[comm, "clock_nanosleep", tid] = count();
+	// syscall start times
+	@start[tid, "clock_nanosleep"] = nsecs;
+}
+
+// on clock_nanosleep exit,
+// store clock_nanosleep latency
+// add latency to total
+tracepoint:syscalls:sys_exit_clock_nanosleep
+/(pid == (uint64)$1 || pid == (uint64)$2) && (strncmp(comm, str($3), 50) == 0) && @start[tid, "nanosleep"]/
+{
+    
+    $latency = nsecs - @start[tid, "clock_nanosleep"];
+    //clear this for the next call
+	delete(@start[tid, "clock_nanosleep"]);
+
+	// add latency to total
+	@total[comm, "clock_nanosleep", tid] = @total[comm, "clock_nanosleep", tid] + $latency;
+
+	// store syscall latency
+	@ns[comm, "clock_nanosleep", tid] = hist($latency);
+}
+
+
+
+interval:s:60
+{
+  exit();
+}
+
+
+END
+{
+    //this sleep ensures that the outputs get printed in order
+    //when using the thread profiler shell script
+    system("sleep %d", $4);
+	print(@syscall);
+	clear(@syscall);
+
+
+	print(@total);
+
+    //histogram for ns gets printed automatically
+	clear(@total);
+	clear(@start);
+}
+
